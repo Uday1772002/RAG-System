@@ -34,19 +34,19 @@ class PDFProcessor:
             Dictionary containing extracted text, metadata, and page info
         """
         try:
-            file_path = Path(file_path)
-            if not file_path.exists():
-                raise FileNotFoundError(f"PDF file not found: {file_path}")
+            file_path_obj = Path(file_path)
+            if not file_path_obj.exists():
+                raise FileNotFoundError(f"PDF file not found: {file_path_obj}")
                 
             # Extract basic metadata
-            metadata = self._extract_metadata(file_path)
+            metadata = self._extract_metadata(file_path_obj)
             
             # Try native text extraction first
-            native_text = self._extract_native_text(file_path)
+            native_text = self._extract_native_text(file_path_obj)
             
             # If native text is insufficient, use OCR
             if self.ocr_enabled and self._needs_ocr(native_text):
-                ocr_text = self._extract_ocr_text(file_path)
+                ocr_text = self._extract_ocr_text(file_path_obj)
                 # Combine native and OCR text
                 final_text = self._merge_texts(native_text, ocr_text)
             else:
@@ -71,12 +71,16 @@ class PDFProcessor:
                 pdf_reader = PyPDF2.PdfReader(file)
                 info = pdf_reader.metadata
                 
+                # Handle case where metadata might be None
+                if info is None:
+                    info = {}
+                
                 return {
-                    "title": info.get('/Title', ''),
-                    "author": info.get('/Author', ''),
-                    "subject": info.get('/Subject', ''),
-                    "creator": info.get('/Creator', ''),
-                    "producer": info.get('/Producer', ''),
+                    "title": info.get('/Title', '') if info else '',
+                    "author": info.get('/Author', '') if info else '',
+                    "subject": info.get('/Subject', '') if info else '',
+                    "creator": info.get('/Creator', '') if info else '',
+                    "producer": info.get('/Producer', '') if info else '',
                     "pages": len(pdf_reader.pages),
                     "file_size": file_path.stat().st_size
                 }

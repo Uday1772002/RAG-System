@@ -18,7 +18,7 @@ class EmbeddingGenerator:
     def __init__(self, model_name: str = "all-MiniLM-L6-v2", device: str = "cpu"):
         self.model_name = model_name
         self.device = device
-        self.model = None
+        self.model: Optional[SentenceTransformer] = None
         self._load_model()
         
     def _load_model(self):
@@ -44,6 +44,9 @@ class EmbeddingGenerator:
         try:
             if not texts:
                 return np.array([])
+                
+            if self.model is None:
+                raise RuntimeError("Model not loaded. Cannot generate embeddings.")
                 
             logger.info(f"Generating embeddings for {len(texts)} texts")
             
@@ -98,10 +101,11 @@ class VectorStore:
             )
             
             # Create or get collection
-            self.collection = self.client.get_or_create_collection(
-                name="documents",
-                metadata={"hnsw:space": "cosine"}
-            )
+            if self.client is not None:
+                self.collection = self.client.get_or_create_collection(
+                    name="documents",
+                    metadata={"hnsw:space": "cosine"}
+                )
             logger.info("ChromaDB initialized successfully")
             
         except Exception as e:
@@ -135,6 +139,9 @@ class VectorStore:
                 metadatas.append(chunk['metadata'])
                 
             # Add to collection
+            if self.collection is None:
+                raise RuntimeError("Collection not initialized. Cannot add documents.")
+                
             self.collection.add(
                 embeddings=embeddings.tolist(),
                 documents=texts,
@@ -163,6 +170,9 @@ class VectorStore:
             List of search results with metadata
         """
         try:
+            if self.collection is None:
+                raise RuntimeError("Collection not initialized. Cannot query documents.")
+                
             # Prepare query
             query_embedding_list = [query_embedding.tolist()]
             
@@ -175,14 +185,23 @@ class VectorStore:
             
             # Format results
             formatted_results = []
-            for i in range(len(results['ids'][0])):
-                result = {
-                    'id': results['ids'][0][i],
-                    'text': results['documents'][0][i],
-                    'metadata': results['metadatas'][0][i],
-                    'distance': results['distances'][0][i]
-                }
-                formatted_results.append(result)
+            if (results and 
+                results.get('ids') and 
+                len(results['ids']) > 0 and 
+                len(results['ids'][0]) > 0):
+                
+                documents = results.get('documents') or [[]]
+                metadatas = results.get('metadatas') or [[]]
+                distances = results.get('distances') or [[]]
+                
+                for i in range(len(results['ids'][0])):
+                    result = {
+                        'id': results['ids'][0][i],
+                        'text': documents[0][i] if documents and len(documents) > 0 and len(documents[0]) > i else '',
+                        'metadata': metadatas[0][i] if metadatas and len(metadatas) > 0 and len(metadatas[0]) > i else {},
+                        'distance': distances[0][i] if distances and len(distances) > 0 and len(distances[0]) > i else 0.0
+                    }
+                    formatted_results.append(result)
                 
             return formatted_results
             
@@ -193,6 +212,13 @@ class VectorStore:
     def get_collection_stats(self) -> Dict:
         """Get statistics about the collection"""
         try:
+            if self.collection is None:
+                return {
+                    "total_documents": 0,
+                    "collection_name": "None",
+                    "persist_directory": self.persist_directory
+                }
+                
             count = self.collection.count()
             return {
                 "total_documents": count,
@@ -206,7 +232,11 @@ class VectorStore:
     def delete_collection(self):
         """Delete the entire collection"""
         try:
+            if self.client is None:
+                raise RuntimeError("Client not initialized. Cannot delete collection.")
+                
             self.client.delete_collection("documents")
+            self.collection = None  # Reset collection reference
             logger.info("Collection deleted successfully")
         except Exception as e:
             logger.error(f"Error deleting collection: {e}")
