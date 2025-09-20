@@ -33,7 +33,7 @@ class EmbeddingGenerator:
             
     def generate_embeddings(self, texts: List[str]) -> np.ndarray:
         """
-        Generate embeddings for a list of texts
+        Generate embeddings for a list of texts with memory optimization
         
         Args:
             texts: List of text strings
@@ -46,7 +46,27 @@ class EmbeddingGenerator:
                 return np.array([])
                 
             logger.info(f"Generating embeddings for {len(texts)} texts")
-            embeddings = self.model.encode(texts, show_progress_bar=True)
+            
+            # Process in smaller batches to reduce memory usage
+            batch_size = 8  # Smaller batch size
+            all_embeddings = []
+            
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i + batch_size]
+                batch_embeddings = self.model.encode(
+                    batch_texts, 
+                    show_progress_bar=False,  # Disable progress bar to reduce overhead
+                    convert_to_numpy=True,
+                    normalize_embeddings=True  # Normalize to reduce memory
+                )
+                all_embeddings.append(batch_embeddings)
+                
+                # Force garbage collection for large batches
+                if len(all_embeddings) % 10 == 0:
+                    import gc
+                    gc.collect()
+            
+            embeddings = np.vstack(all_embeddings) if all_embeddings else np.array([])
             logger.info("Embeddings generated successfully")
             
             return embeddings

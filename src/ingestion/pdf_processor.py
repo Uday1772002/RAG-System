@@ -121,14 +121,25 @@ class PDFProcessor:
         return True
         
     def _extract_ocr_text(self, file_path: Path) -> List[str]:
-        """Extract text using OCR"""
+        """Extract text using OCR with memory optimization"""
         try:
-            # Convert PDF to images
-            images = convert_from_path(file_path, dpi=300)
+            # Convert PDF to images with reduced DPI for memory
+            images = convert_from_path(
+                file_path, 
+                dpi=200,  # Reduced from 300
+                fmt='jpeg'  # Use JPEG for smaller memory footprint
+            )
             ocr_text = []
             
             for i, image in enumerate(images):
                 logger.info(f"Processing page {i+1} with OCR")
+                
+                # Resize image if too large to save memory
+                width, height = image.size
+                if width > 2000 or height > 2000:
+                    ratio = min(2000/width, 2000/height)
+                    new_size = (int(width * ratio), int(height * ratio))
+                    image = image.resize(new_size, Image.Resampling.LANCZOS)
                 
                 # Preprocess image for better OCR
                 processed_image = self._preprocess_image(image)
@@ -141,6 +152,19 @@ class PDFProcessor:
                 )
                 
                 ocr_text.append(text.strip())
+                
+                # Clear images from memory
+                del image, processed_image
+                
+                # Force garbage collection every 3 pages
+                if (i + 1) % 3 == 0:
+                    import gc
+                    gc.collect()
+                
+            # Clear all images from memory
+            del images
+            import gc
+            gc.collect()
                 
             return ocr_text
             
