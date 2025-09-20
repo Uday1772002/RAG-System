@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: rag-system-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m src.api.main --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: PYTHONUNBUFFERED
+        value: 1
+    disk:
+      name: rag-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+
+  - type: web
+    name: rag-system-ui
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run ui/app.py --server.port $PORT --server.address 0.0.0.0
+    plan: free
+    envVars:
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: API_BASE_URL
+        value: https://rag-system-api.onrender.com

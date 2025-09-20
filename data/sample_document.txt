@@ -1,0 +1,27 @@
+Sample Document Content
+
+This is a sample document that demonstrates the capabilities of the RAG system.
+
+Key Features:
+1. PDF Processing: The system can handle both native and scanned PDF documents
+2. OCR Integration: Automatic text extraction from scanned documents using Tesseract
+3. Smart Chunking: Intelligent document segmentation with configurable overlap
+4. Vector Embeddings: Generation of semantic embeddings using sentence transformers
+5. Retrieval: Semantic search and retrieval of relevant document chunks
+6. Generation: LLM-powered response generation with citations
+7. Evaluation: Comprehensive quality metrics for system performance
+
+Technical Architecture:
+- Python-based backend with FastAPI
+- ChromaDB for vector storage
+- Streamlit for web interface
+- Modular design for easy extension
+
+Use Cases:
+- Document Q&A systems
+- Research assistance
+- Knowledge base queries
+- Legal document analysis
+- Academic research support
+
+The system is designed to be scalable, maintainable, and easily extensible for various use cases.

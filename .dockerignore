@@ -1,0 +1,30 @@
+# Render Deployment
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.DS_Store
+.vscode/
+*.log
+.git/
+
+# Local development
+.pytest_cache/
+htmlcov/
+.coverage
+*.egg-info/
+
+# Virtual environment
+venv/
+env/
+.virtualenv/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.directory

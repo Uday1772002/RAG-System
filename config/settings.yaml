@@ -1,0 +1,71 @@
+# RAG System Configuration
+
+# Ingestion Settings
+ingestion:
+  chunk_size: 1000
+  chunk_overlap: 200
+  max_file_size_mb: 50
+  supported_formats: ["pdf", "PDF"]
+
+# OCR Settings
+ocr:
+  enabled: true
+  language: "eng"
+  confidence_threshold: 60
+  dpi: 300
+
+# Embedding Settings
+embeddings:
+  model: "all-MiniLM-L6-v2"
+  batch_size: 32
+  device: "cpu" # or "cuda" for GPU
+
+# Vector Database
+vector_db:
+  type: "chromadb"
+  persist_directory: "./data/vector_db"
+  collection_name: "documents"
+
+# Retrieval Settings
+retrieval:
+  top_k: 5
+  similarity_threshold: 0.7
+  rerank: true
+
+# Generation Settings
+generation:
+  provider: "ollama" # Options: "ollama", "huggingface", "openai", "anthropic"
+  model: "llama2" # For ollama: llama2, mistral, codellama. For HF: microsoft/DialoGPT-medium
+  max_tokens: 1000
+  temperature: 0.7
+  # Ollama settings
+  ollama_base_url: "http://localhost:11434"
+  # Hugging Face settings (free)
+  hf_model: "microsoft/DialoGPT-medium" # Free model
+  hf_max_length: 1000
+  top_p: 1.0
+  timeout: 30 # seconds
+  retry_attempts: 3
+
+# Local Model Settings (if using local models)
+local_model:
+  model_path: ""
+  device: "cpu" # or "cuda"
+  load_in_8bit: false
+  load_in_4bit: false
+
+# API Settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: true
+
+# UI Settings
+ui:
+  port: 8501
+  theme: "light"
+
+# Evaluation Settings
+evaluation:
+  metrics: ["precision", "recall", "f1", "bleu", "rouge"]
+  test_dataset: "./data/test_questions.json"
